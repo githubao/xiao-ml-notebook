@@ -15,6 +15,7 @@ import tensorflow as tf
 mnist： 序列长度 * 样本的个数 * 向量长度
 '''
 
+
 def run():
     ' batch_size * step_size * embedding_size '
     x = np.random.randn(2, 3, 4)
@@ -23,6 +24,10 @@ def run():
 
     cell = tf.contrib.rnn.BasicLSTMCell(n_hidden)
 
+    '''
+    output: [batch_size, max_time, cell.output_size]
+    last_states: [batch_size, state_size]
+    '''
     outputs, last_states = tf.nn.dynamic_rnn(cell=cell, dtype=tf.float64, inputs=x)
 
     result = tf.contrib.learn.run_n({'outputs': outputs, 'last_states': last_states}, n=1, feed_dict=None)
