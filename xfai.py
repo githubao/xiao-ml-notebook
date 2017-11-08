@@ -8,6 +8,7 @@
 @time: 2017/10/30 20:46
 """
 
+import traceback
 import requests
 import time
 from base64 import b64encode
@@ -20,34 +21,32 @@ url = 'https://api.xfyun.cn/v1/aiui/v1/text_semantic'
 
 
 def run():
-    with open('C:\\Users\\BaoQiang\\Desktop\\bdai.txt', 'r', encoding='utf-8') as f:
+    with open('C:\\Users\\BaoQiang\\Desktop\\ability\\xfai.txt', 'r', encoding='utf-8') as f:
         data = f.readline()
-        json_data = json.loads(data)
+        json_data = json.loads(data.strip())
 
-    fw = open('C:\\Users\\BaoQiang\\Desktop\\xunfei-intent-test.txt', 'w', encoding='utf-8')
+    fw = open('C:\\Users\\BaoQiang\\Desktop\\xunfei-intent-out.txt', 'w', encoding='utf-8')
 
-    filepath = 'C:\\Users\\BaoQiang\\Desktop\\simi-test'
+    filepath = 'C:\\Users\\BaoQiang\\Desktop\\intent'
     for filename in os.listdir(filepath):
         full_file = os.path.join(filepath, filename)
 
-        source = filename.replace('.txt', '')
-
         with open(full_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                try:
-                    line = line.strip()
-                    ques, degree = line.split('\t')
+            for idx, line in enumerate(f):
+                line = line.strip()
+                ques, degree = line.split('\t')
 
-                    result_json = get_single(json_data, ques)
+                res = get_single(json_data, ques)
 
-                    fw.write('{}\t{}\t{}\t{}\n'.format(source, ques, result_json, degree))
-                    fw.flush()
+                fw.write('{}\t{}\t'.format(ques, degree))
+                json.dump(res, fw, ensure_ascii=False, sort_keys=True)
+                fw.write('\n')
 
-                    time.sleep(random.random())
+                fw.flush()
 
-                except Exception as e:
-                    print(e)
-                    print(line)
+                time.sleep(random.random())
+
+                print('process idx: {}'.format(idx + 1))
 
         print('process file: {} complete'.format(full_file))
 
@@ -65,10 +64,17 @@ def get_single(json_data, text):
     src = '{}{}{}text={}'.format(json_data['apiKey'], headers['X-CurTime'], headers['X-Param'], text_b64)
     headers['X-CheckSum'] = get_md5(src)
 
-    response = requests.post(url, headers=headers, data={'text': text_b64})
-    print(headers)
+    result_json = ''
 
-    return response.text
+    try:
+        response = requests.post(url, headers=headers, data={'text': text_b64})
+        result_json = json.loads(response.text)
+
+    except Exception as e:
+        print(text, e)
+        traceback.print_exc()
+
+    return result_json
 
 
 def get_md5(src):
